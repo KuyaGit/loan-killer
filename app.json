@@ -14,7 +14,7 @@
     "android": {
       "package": "com.kuyagit.loankiller",
       "adaptiveIcon": {
-        "backgroundColor": "#ECFDF5",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
