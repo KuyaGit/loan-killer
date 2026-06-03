@@ -18,6 +18,37 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  // Loan Logs tab icons
+  'chart.bar.fill': 'bar-chart',
+  'list.bullet': 'list',
+  'plus.circle.fill': 'add-circle',
+  'gearshape.fill': 'settings',
+  // Loan Logs UI icons
+  'checkmark.circle.fill': 'check-circle',
+  'circle': 'radio-button-unchecked',
+  'trash': 'delete',
+  'square.and.arrow.up': 'share',
+  'square.and.arrow.down': 'download',
+  'magnifyingglass': 'search',
+  'xmark.circle.fill': 'cancel',
+  'exclamationmark.triangle.fill': 'warning',
+  'checkmark.seal.fill': 'verified',
+  'banknote': 'account-balance',
+  'calendar': 'calendar-today',
+  'lock.fill': 'lock',
+  // Loan Logs aesthetic icons
+  'creditcard.fill': 'credit-card',
+  'chart.pie.fill': 'pie-chart',
+  'calendar.badge.clock': 'event',
+  'tray': 'inbox',
+  'info.circle.fill': 'info',
+  'arrow.up.circle.fill': 'arrow-circle-up',
+  'checkmark.circle': 'check-circle-outline',
+  // App lock icons
+  'faceid': 'fingerprint',
+  'lock.shield.fill': 'security',
+  // Edit
+  'pencil': 'edit',
 } as IconMapping;
 
 /**

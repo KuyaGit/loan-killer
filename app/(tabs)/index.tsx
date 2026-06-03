@@ -1,98 +1,217 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { Card } from '@/components/card';
+import { EmptyState } from '@/components/empty-state';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ProgressBar } from '@/components/progress-bar';
+import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Spacing, Type } from '@/constants/theme';
+import { formatPercent, formatPeso } from '@/constants/format';
+import { getDashboardStats } from '@/services/database';
+import { useLiveQuery } from '@/hooks/use-live-query';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
-export default function HomeScreen() {
+interface StatCardProps {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: string;
+  iconName?: React.ComponentProps<typeof IconSymbol>['name'];
+}
+
+function StatCard({ label, value, sub, accent, iconName }: StatCardProps) {
+  const primary = useThemeColor({}, 'primary');
+  const muted = useThemeColor({}, 'muted');
+  const primaryMuted = useThemeColor({}, 'primaryMuted');
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <Card style={styles.statCard}>
+      <View style={styles.statHeader}>
+        {iconName && (
+          <View style={[styles.statIconBg, { backgroundColor: primaryMuted }]}>
+            <IconSymbol name={iconName} size={16} color={primary} />
+          </View>
+        )}
+        <ThemedText style={[styles.statLabel, { color: muted }]}>{label}</ThemedText>
+      </View>
+      <ThemedText style={[styles.statValue, accent ? { color: accent } : undefined]}>
+        {value}
+      </ThemedText>
+      {sub && <ThemedText style={[styles.statSub, { color: muted }]}>{sub}</ThemedText>}
+    </Card>
+  );
+}
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+export default function DashboardScreen() {
+  const router = useRouter();
+  const background = useThemeColor({}, 'background');
+  const success = useThemeColor({}, 'success');
+  const muted = useThemeColor({}, 'muted');
+  const onPrimary = useThemeColor({}, 'onPrimary');
+
+  const { data: stats, loading } = useLiveQuery(getDashboardStats);
+
+  if (loading && !stats) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: background }]}>
+        <View style={styles.loadingContainer}>
+          <ThemedText style={{ color: muted }}>Loading…</ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!stats || stats.totalLoans === 0) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: background }]}>
+        <ScreenHeader title="Dashboard" />
+        <EmptyState
+          title="No Loans Yet"
+          message="Add your first loan to start tracking your payments and balances."
+          actionLabel="Add Loan"
+          onAction={() => router.push('/(tabs)/add')}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: background }]}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScreenHeader
+          title="Dashboard"
+          subtitle={`${stats.activeLoans} active · ${stats.completedLoans} completed`}
+        />
+
+        {/* Hero card — solid emerald surface */}
+        <Card variant="accent" style={styles.heroCard}>
+          <ThemedText style={[styles.heroLabel, { color: onPrimary, opacity: 0.75 }]}>
+            Overall Debt Progress
+          </ThemedText>
+          <ThemedText style={[styles.heroPct, { color: onPrimary }]}>
+            {formatPercent(stats.avgProgress)}
+          </ThemedText>
+          <ProgressBar
+            value={stats.avgProgress}
+            height={8}
+            color={onPrimary}
+            trackColor={onPrimary + '33'}
+          />
+          <View style={styles.heroFooter}>
+            <ThemedText style={[styles.heroFooterText, { color: onPrimary, opacity: 0.75 }]}>
+              {formatPeso(stats.totalPaid)} paid
+            </ThemedText>
+            <ThemedText style={[styles.heroFooterText, { color: onPrimary, opacity: 0.75 }]}>
+              {formatPeso(stats.totalRemaining)} remaining
+            </ThemedText>
+          </View>
+        </Card>
+
+        {/* Stat grid */}
+        <View style={styles.grid}>
+          <StatCard
+            label="Total Borrowed"
+            value={formatPeso(stats.totalBorrowed)}
+            iconName="creditcard.fill"
+          />
+          <StatCard
+            label="Remaining Balance"
+            value={formatPeso(stats.totalRemaining)}
+            accent={stats.totalRemaining === 0 ? success : undefined}
+            iconName="chart.pie.fill"
+          />
+          <StatCard
+            label="Monthly Due"
+            value={formatPeso(stats.totalMonthlyPayments)}
+            sub="active loans"
+            iconName="calendar.badge.clock"
+          />
+          <StatCard
+            label="Total Paid"
+            value={formatPeso(stats.totalPaid)}
+            accent={success}
+            iconName="checkmark.seal.fill"
+          />
+          <StatCard
+            label="Active Loans"
+            value={String(stats.activeLoans)}
+            iconName="list.bullet"
+          />
+          <StatCard
+            label="Completed"
+            value={String(stats.completedLoans)}
+            accent={stats.completedLoans > 0 ? success : undefined}
+            iconName="checkmark.circle.fill"
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safe: { flex: 1 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  content: { paddingBottom: Spacing.xxxl },
+  heroCard: {
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.xs,
+    gap: Spacing.md,
+  },
+  heroLabel: {
+    ...Type.caption,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  heroPct: {
+    ...Type.heroNumber,
+  },
+  heroFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: Spacing.xs,
+  },
+  heroFooterText: {
+    ...Type.caption,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing.sm + 4,
+    paddingTop: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    gap: Spacing.xs,
+    padding: Spacing.md + 2,
+  },
+  statHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.xs,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  statIconBg: {
+    width: 28,
+    height: 28,
+    borderRadius: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  statLabel: {
+    ...Type.sectionLabel,
+    flex: 1,
+  },
+  statValue: {
+    ...Type.bodyStrong,
+    fontSize: 17,
+  },
+  statSub: {
+    ...Type.caption,
   },
 });
