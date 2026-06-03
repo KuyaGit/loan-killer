@@ -15,9 +15,16 @@ jobs:
     name: Build Android APK & Publish GitHub Release
     runs-on: ubuntu-latest
 
+    # write access is required to push the version-bump commit and create tags
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # full history + tags needed for conventional-commit version bumping
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -34,8 +41,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Reads commits since the last vX.Y.Z tag and determines the bump level:
+      #   BREAKING CHANGE / feat!:  → major
+      #   feat:                     → minor
+      #   everything else           → patch
+      # Writes the new version back into app.json and emits it to $GITHUB_OUTPUT.
+      - name: Bump version (conventional commits)
+        id: bump
+        run: node scripts/bump-version.mjs
+
       # expo prebuild generates android/ from the Expo config.
-      # VERSION_CODE is the Actions run number, which is always increasing.
+      # VERSION_CODE is the Actions run number — strictly increasing regardless
+      # of semantic version math, so sideloaded upgrades always work.
       - name: Generate native Android project (Expo prebuild)
         run: VERSION_CODE=${{ github.run_number }} npx expo prebuild --platform android --clean
 
@@ -83,18 +100,27 @@ jobs:
             --no-daemon \
             -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
 
-      - name: Read app version
-        id: version
-        run: echo "version=$(node -p "require('./app.json').expo.version")" >> "$GITHUB_OUTPUT"
+      # Commit the bumped app.json back to main AFTER a successful build so
+      # failed builds never pollute the version history.
+      # [skip ci] stops GitHub Actions from re-triggering on this commit.
+      - name: Commit version bump
+        run: |
+          VERSION=${{ steps.bump.outputs.version }}
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.json
+          git commit -m "chore: release v${VERSION} [skip ci]"
+          git pull --rebase origin main
+          git push origin main
 
       # gh CLI is pre-installed on all GitHub-hosted runners.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          VERSION=${{ steps.bump.outputs.version }}
           APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
-          TAG="v${{ steps.version.outputs.version }}-${{ github.run_number }}"
-          gh release create "$TAG" \
-            --title "Loan Killer v${{ steps.version.outputs.version }} (build ${{ github.run_number }})" \
+          gh release create "v${VERSION}" \
+            --title "Loan Killer v${VERSION}" \
             --notes "Automated release from commit \`${{ github.sha }}\` on \`main\`." \
             "$APK#loan-killer.apk"
