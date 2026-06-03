@@ -1,0 +1,100 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  build-and-release:
+    name: Build Android APK & Publish GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # expo prebuild generates android/ from the Expo config.
+      # VERSION_CODE is the Actions run number, which is always increasing.
+      - name: Generate native Android project (Expo prebuild)
+        run: VERSION_CODE=${{ github.run_number }} npx expo prebuild --platform android --clean
+
+      # Gradle needs to know where the Android SDK lives on this runner.
+      - name: Point Gradle at Android SDK
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
+      # Decode the base64-encoded keystore stored in GitHub Secrets.
+      - name: Decode release keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+
+      # Append a signing config block to the generated build.gradle.
+      # Gradle allows reopening android {} — the config is merged with the
+      # existing block produced by expo prebuild.
+      - name: Inject release signing config
+        run: |
+          cat >> android/app/build.gradle << 'GROOVY'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("KEYSTORE_FILE"))
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("KEY_ALIAS")
+                      keyPassword System.getenv("KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          GROOVY
+
+      - name: Build release APK
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew assembleRelease \
+            --no-daemon \
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
+
+      - name: Read app version
+        id: version
+        run: echo "version=$(node -p "require('./app.json').expo.version")" >> "$GITHUB_OUTPUT"
+
+      # gh CLI is pre-installed on all GitHub-hosted runners.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          TAG="v${{ steps.version.outputs.version }}-${{ github.run_number }}"
+          gh release create "$TAG" \
+            --title "Loan Killer v${{ steps.version.outputs.version }} (build ${{ github.run_number }})" \
+            --notes "Automated release from commit \`${{ github.sha }}\` on \`main\`." \
+            "$APK#loan-killer.apk"
