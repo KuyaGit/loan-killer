@@ -1,0 +1,23 @@
+<svg width="1024" height="1024" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Loan Killer — ₱ glyph with diagonal slash
+    Emerald peso sign (#059669) + red "kill" slash (#dc2626)
+    Transparent background — works on both light & dark splash
+  -->
+  <defs>
+    <mask id="peso">
+      <!-- P body (solid white = opaque in mask) -->
+      <path d="M 20,12 L 35,12 C 98,12 98,54 35,54 L 35,88 L 20,88 Z" fill="white"/>
+      <!-- Double-bar cutouts (black = transparent in mask) -->
+      <rect x="12" y="28" width="72" height="7" rx="1" fill="black"/>
+      <rect x="12" y="39" width="72" height="7" rx="1" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Emerald ₱ glyph with transparent bar gaps -->
+  <rect width="100" height="100" fill="#059669" mask="url(#peso)"/>
+
+  <!-- Red slash — "killing" the debt -->
+  <line x1="14" y1="87" x2="86" y2="13"
+        stroke="#dc2626" stroke-width="9" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="-18 -18 136 136" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Android adaptive icon foreground layer.
+    Same glyph as splash-transparent but zoomed out into the
+    adaptive-icon safe zone (~66% of the output canvas).
+    viewBox="-18 -18 136 136" adds ~18% margin on each side.
+  -->
+  <defs>
+    <mask id="peso">
+      <path d="M 20,12 L 35,12 C 98,12 98,54 35,54 L 35,88 L 20,88 Z" fill="white"/>
+      <rect x="12" y="28" width="72" height="7" rx="1" fill="black"/>
+      <rect x="12" y="39" width="72" height="7" rx="1" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect x="-18" y="-18" width="136" height="136" fill="#059669" mask="url(#peso)"/>
+  <line x1="14" y1="87" x2="86" y2="13"
+        stroke="#dc2626" stroke-width="9" stroke-linecap="round"/>
+</svg>
