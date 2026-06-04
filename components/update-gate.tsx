@@ -35,6 +35,14 @@ export function UpdateGate({ children }: UpdateGateProps) {
     return () => clearTimeout(t);
   }, []);
 
+  // Each foreground re-check produces a fresh info object.  Reset the
+  // dismissal so the modal re-appears on the next app open if an update is
+  // still pending.  When info becomes null (up-to-date / offline) the modal
+  // hides automatically via showModal.
+  useEffect(() => {
+    setDismissed(false);
+  }, [info]);
+
   const showModal = !!info && !dismissed && splashGone;
 
   function handleUpdate() {
