@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSQLiteContext } from 'expo-sqlite';
 
 import { Card } from '@/components/card';
+import { DatePickerField } from '@/components/date-picker-field';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScreenHeader } from '@/components/screen-header';
 import { TermChips } from '@/components/term-chips';
@@ -165,12 +166,10 @@ export default function AddLoanScreen() {
             {/* Start Date */}
             <View style={styles.field}>
               <ThemedText style={styles.label}>Start Date</ThemedText>
-              <TextInput
+              <DatePickerField
                 value={startDate}
-                onChangeText={setStartDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={muted}
-                style={[styles.input, { backgroundColor: card, borderColor: errors.startDate ? danger : border, color: text }]}
+                onChange={setStartDate}
+                error={!!errors.startDate}
               />
               {errors.startDate && <ThemedText style={[styles.errorText, { color: danger }]}>{errors.startDate}</ThemedText>}
             </View>
