@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 
 import { AnimatedSplash } from '@/components/animated-splash';
 import { LockGate } from '@/components/lock-gate';
+import { UpdateGate } from '@/components/update-gate';
 import { migrate } from '@/services/database';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -38,14 +39,16 @@ export default function RootLayout() {
         <SQLiteProvider databaseName="loanlogs.db" onInit={migrate}>
           <LockGate>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="loan/[id]"
-                  options={{ title: 'Loan Details', headerBackTitle: 'Loans' }}
-                />
-              </Stack>
-              <StatusBar style="auto" />
+              <UpdateGate>
+                <Stack>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="loan/[id]"
+                    options={{ title: 'Loan Details', headerBackTitle: 'Loans' }}
+                  />
+                </Stack>
+                <StatusBar style="auto" />
+              </UpdateGate>
             </ThemeProvider>
           </LockGate>
         </SQLiteProvider>
