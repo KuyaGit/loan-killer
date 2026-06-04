@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MAX_TERM_MONTHS } from '@/constants/database';
 import { Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 const DEFAULT_PRESETS = [6, 12, 24, 36, 48, 60];
 
@@ -45,7 +46,7 @@ export function TermChips({
   }, [value, presets]);
 
   const primary = useThemeColor({}, 'primary');
-  const onPrimary = useThemeColor({}, 'onPrimary');
+  const primaryMuted = useThemeColor({}, 'primaryMuted');
   const border = useThemeColor({}, 'border');
   const text = useThemeColor({}, 'text');
   const muted = useThemeColor({}, 'muted');
@@ -97,17 +98,21 @@ export function TermChips({
               style={({ pressed }) => [
                 styles.chip,
                 isSelected
-                  ? { backgroundColor: primary }
+                  ? { backgroundColor: primaryMuted, borderWidth: 1.5, borderColor: primary }
                   : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: border },
                 pressed && styles.chipPressed,
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               accessibilityLabel={isCustomChip ? 'Custom terms' : `${item} months`}>
+              {isSelected && (
+                <IconSymbol name="checkmark.circle.fill" size={15} color={primary} />
+              )}
               <Text
                 style={[
                   styles.chipLabel,
-                  { color: isSelected ? onPrimary : text },
+                  { color: isSelected ? primary : text },
+                  isSelected && styles.chipLabelSelected,
                 ]}>
                 {isCustomChip ? 'Custom' : `${item}m`}
               </Text>
@@ -156,18 +161,23 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     paddingVertical: Spacing.sm + 2,   // 10
     paddingHorizontal: Spacing.lg,      // 16
     borderRadius: Radius.pill,
     minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   chipPressed: {
     opacity: 0.7,
   },
   chipLabel: {
     ...Type.bodyStrong,
+  },
+  chipLabelSelected: {
+    fontWeight: '700',
   },
   customContainer: {
     gap: Spacing.xs,
