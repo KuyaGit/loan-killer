@@ -8,7 +8,7 @@
 
 const RELEASES_URL =
   'https://api.github.com/repos/KuyaGit/loan-killer/releases/latest';
-const APK_ASSET_NAME = 'loan-killer.apk';
+const APK_ASSET_NAME = 'app-release.apk';
 const FETCH_TIMEOUT_MS = 5000;
 
 export interface UpdateInfo {
