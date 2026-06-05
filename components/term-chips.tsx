@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: Spacing.sm + 2,   // 10
     paddingHorizontal: Spacing.lg,      // 16
-    borderRadius: Radius.pill,
+    borderRadius: Radius.md,
     minHeight: 40,
   },
   chipPressed: {
