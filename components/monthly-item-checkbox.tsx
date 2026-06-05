@@ -27,24 +27,9 @@ export function MonthlyItemCheckbox({
   const muted = useThemeColor({}, 'muted');
 
   const checkColor = month.isPaid ? success : pending;
-  const rowBg = month.isPaid ? 'transparent' : 'transparent';
 
   return (
-    <View style={[styles.container, { borderBottomColor: border, backgroundColor: rowBg }]}>
-      <Pressable
-        style={({ pressed }) => [styles.checkButton, pressed && !disabled && styles.checkPressed]}
-        onPress={() => !disabled && onToggle(month.id, !month.isPaid)}
-        disabled={disabled}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: month.isPaid, disabled }}
-        accessibilityLabel={`Month ${month.monthNumber} payment of ${formatPeso(month.amount)}, ${month.isPaid ? 'paid' : 'pending'}`}>
-        <IconSymbol
-          name={month.isPaid ? 'checkmark.circle.fill' : 'circle'}
-          size={26}
-          color={checkColor}
-        />
-      </Pressable>
-
+    <View style={[styles.container, { borderBottomColor: border }]}>
       <View style={styles.content}>
         <View style={styles.topRow}>
           <ThemedText style={styles.monthLabel}>Month {month.monthNumber}</ThemedText>
@@ -69,7 +54,23 @@ export function MonthlyItemCheckbox({
         </Pressable>
       )}
 
-      {/* Lock icon for completed-loan rows */}
+      {/* Paid-check button — always visible; disabled on completed loans */}
+      <Pressable
+        style={({ pressed }) => [styles.checkButton, pressed && !disabled && styles.checkPressed]}
+        onPress={() => !disabled && onToggle(month.id, !month.isPaid)}
+        disabled={disabled}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: month.isPaid, disabled }}
+        accessibilityLabel={`Month ${month.monthNumber} payment of ${formatPeso(month.amount)}, ${month.isPaid ? 'paid' : 'pending'}`}>
+        <IconSymbol
+          name={month.isPaid ? 'checkmark.circle.fill' : 'circle'}
+          size={26}
+          color={checkColor}
+        />
+      </Pressable>
+
+      {/* Lock icon for completed-loan unpaid rows */}
       {disabled && !month.isPaid && (
         <IconSymbol name="lock.fill" size={14} color={muted} />
       )}
